@@ -30,7 +30,15 @@ public class GameView extends View implements SensorEventListener {
     float ax, ay, az;
     float gx, gy, gz;
 
-    float rx, ry, rz;
+
+    //Paddle Part:
+    float rx, ry, rz, rzx, rzy;
+    private static final float NS2S = 1.0f / 1000000000.0f;
+    private long timestamp=0;
+    private static final double EPSILON = 0.1f;
+    private double gyroscopeRotationVelocity = 0;
+
+    //end Paddle Part
 
     float ax2;
     String text;
@@ -68,7 +76,7 @@ public class GameView extends View implements SensorEventListener {
         super.onDraw(canvas);
         canvas.drawColor(Color.BLACK);
         ball.update(velocity, dWidth, dHeight);
-        paddle.update(dist, rx, ry, rz, delta_t, dir);
+        paddle.update(dist, rx, ry, rz, rzx, rzy, delta_t, dir);
 
         if((ball.getCenterX() - ball.getRadius() >= paddle.getLeft()-50 && ball.getCenterX() + ball.getRadius() <= paddle.getRight()+50)
              && (Math.abs(ball.getCenterY() - paddle.getTop()) <= ball.getRadius() ||
@@ -166,9 +174,42 @@ public class GameView extends View implements SensorEventListener {
 
         }
         if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-            rx = event.values[0];
-            ry = event.values[1];
-            rz = event.values[2];
+//            rx = event.values[0];
+//            ry = event.values[1];
+//            rz = event.values[2];
+
+            if (timestamp != 0) {
+                final float dT = (event.timestamp - timestamp) * NS2S;
+                // Axis of the rotation sample, not normalized yet.
+                float axisX = event.values[0];
+                float axisY = event.values[1];
+                float axisZ = event.values[2];
+
+                // Calculate the angular speed of the sample
+                gyroscopeRotationVelocity = Math.sqrt(axisX * axisX + axisY * axisY + axisZ * axisZ);
+
+                // Normalize the rotation vector if it's big enough to get the axis
+                if (gyroscopeRotationVelocity > EPSILON) {
+                    axisX /= gyroscopeRotationVelocity;
+                    axisY /= gyroscopeRotationVelocity;
+                    axisZ /= gyroscopeRotationVelocity;
+                }
+
+                // Integrate around this axis with the angular speed by the timestep
+                // in order to get a delta rotation from this sample over the timestep
+                // We will convert this axis-angle representation of the delta rotation
+                // into a quaternion before turning it into the rotation matrix.
+                double thetaOverTwo = gyroscopeRotationVelocity * dT / 2.0f;
+                double sinThetaOverTwo = Math.sin(thetaOverTwo);
+                double cosThetaOverTwo = Math.cos(thetaOverTwo);
+                rx = ((float) (sinThetaOverTwo * axisX));
+                ry = ((float) (sinThetaOverTwo * axisY));
+                rz = ((float) (sinThetaOverTwo * axisZ));
+                rzx = ((float) (cosThetaOverTwo * axisZ));
+                rzy = ((float) (sinThetaOverTwo * axisZ));
+//                deltaQuaternion.setW(-(float) cosThetaOverTwo);
+            }
+            timestamp = event.timestamp;
 
         }
 
