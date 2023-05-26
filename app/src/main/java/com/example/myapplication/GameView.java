@@ -1,5 +1,7 @@
 package com.example.myapplication;
 
+import static android.content.ContentValues.TAG;
+
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -174,9 +176,20 @@ public class GameView extends View implements SensorEventListener {
 
         }
         if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-//            rx = event.values[0];
-//            ry = event.values[1];
-//            rz = event.values[2];
+            rx = event.values[0];
+            ry = event.values[1];
+            rz = event.values[2];
+
+//            float[] values = event.values;
+//            float x = values[0];
+//            float y = values[1];
+//            float z = values[2];
+//            float gyroX = (float) (x * (180 / Math.PI));
+//            float gyroY = (float) (y * (180 / Math.PI));
+//            float gyroZ = (float) (z * (180 / Math.PI));
+//            Log.d(TAG, "Gyroscope X: " + gyroX + " degrees/s");
+//            Log.d(TAG, "Gyroscope Y: " + gyroY + " degrees/s");
+//            Log.d(TAG, "Gyroscope Z: " + gyroZ + " degrees/s");
 
             if (timestamp != 0) {
                 final float dT = (event.timestamp - timestamp) * NS2S;

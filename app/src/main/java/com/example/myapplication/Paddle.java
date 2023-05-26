@@ -17,6 +17,9 @@ public class Paddle {
     private float yb;
 
     private float  deltax, deltay, deltaz;
+    private boolean rightfix, leftfix;
+
+    private float degrees, pivotX, pivotY;
 
     private float speedX;
     private final int screenWidth;
@@ -53,6 +56,8 @@ public class Paddle {
         deltax = 0;
         deltay = 0;
         deltaz = 0;
+        rightfix = false;
+        leftfix = false;
 
     }
 
@@ -77,16 +82,22 @@ public class Paddle {
     }
 
     public void update(float ax, float rx, float ry, float rz, float rzx, float rzy, double delta_t, int dir) {
-//        if (rx > 0)
-//            xl += rx;
-//        else
-//            xr += rx;
-//
-//        if (ry > 0)
-//            yu += ry;
-//        else
-//            yb += ry;
-//
+        if (rx > 0) {
+            deltax = -rx;
+            rightfix = true;//fix
+            leftfix = false;
+        }else {
+            deltax = rx;
+            rightfix = false;
+            leftfix = true;//fix
+        }
+        if (ry > 0) {
+            deltay = -ry;
+//            leftfix = false;
+        }else {
+            deltay = ry;
+//            leftfix = true;
+        }
 //        if (rz > 0) {
 //            xl += (rzx-xl);
 //            xr += (rzx-xr);
@@ -100,10 +111,11 @@ public class Paddle {
 //        float yun  =  yu + ry;
 //        float ybn  =  yb + ry;
 //
+
         xl += rx;
         xr += rx;
-        yu += ry;
-        yb += ry;
+//        yu += ry;
+//        yb += ry;
 //        float zn  =  z + rz;
 //        float zn  =  z + rz;
 
@@ -114,8 +126,8 @@ public class Paddle {
         }
         if (yb<0) {
             int dist = calDist(ry, screenHeight);
-            yb -= ry;
-            yu -= ry;
+//            yb -= ry;
+//            yu -= ry;
         }
         if (xr>screenWidth) {
             int dist = calDist(rx, screenWidth);
@@ -124,8 +136,8 @@ public class Paddle {
         }
         if (yu>screenHeight) {
             int dist = calDist(ry, screenHeight);
-            yu -= ry;
-            yb -= ry;
+//            yu -= ry;
+//            yb -= ry;
         }
 
 //        float pixel_move = ax;
@@ -179,29 +191,39 @@ public class Paddle {
         // Define the skew factor
         float skewFactor = 0.5f;
 
+        // true means add whit 0
+//        float ladded = leftfix ? 0 : deltay; // true means fix
+        float yladded = -160; // true means fix
+//        float radded = rightfix ? 0 : deltay;
+        float yradded = 0;
+//        float uadded = leftfix ? 0 : deltax; // true means fix
+//        float dadded = rightfix ? 0 : deltay;
+        float xladded = -5;
+
+        //left right fix cuz top of paddle
         // Move to the top left corner of the rectangle
-        path.moveTo(left, top-40);
+        path.moveTo(left, top+yladded);//+ -> min, - -> add, if left fix -> 0
 
         // Draw the top line of the rectangle
-        path.lineTo(right, top);
+        path.lineTo(right, top+yradded);//+ -> min, - -> add, if right fix -> 0
 
         // Skew the canvas
         canvas.skew(skewFactor, 0);
 
         // Draw the right line of the rectangle
-        path.lineTo(right, bottom);
+        path.lineTo(right+xladded, bottom); //
 
         // Restore the canvas skew
         canvas.skew(-skewFactor, 0);
 
         // Draw the bottom line of the rectangle
-        path.lineTo(left, bottom-40);
+        path.lineTo(left+xladded,  bottom+yladded);//.........................................................
 
         // Skew the canvas again
         canvas.skew(skewFactor, 0);
 
         // Draw the left line of the rectangle
-        path.lineTo(left, top-40);
+        path.lineTo(left, top+yladded);//.........................................................dup
 
         // Restore the canvas skew
         canvas.skew(-skewFactor, 0);
@@ -209,6 +231,17 @@ public class Paddle {
         // Close the path
         path.close();
 
+        // Create a matrix and set it to rotate
+//        Matrix matrix = new Matrix();
+//        matrix.postRotate(45, xl, yu);
+//        matrix.postRotate(degrees);
+//
+//// Get the pivot point
+//        float pivotX = path.getBounds().exactCenterX();
+//        float pivotY = path.getBounds().exactCenterY();
+// Apply the rotation to your path
+//        path.transform(matrix);
+        
         // Draw the path on the canvas
         canvas.drawPath(path, paint);
 
