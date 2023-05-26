@@ -1,5 +1,7 @@
 package com.example.myapplication;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -7,14 +9,13 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
+import android.util.Log;
 
 public class Paddle {
-    private float xl;
-    private float xr;
-
-    private float yu;
-
-    private float yb;
+    private float x1;
+    private float x2;
+    private float y1;
+    private float y2;
 
     private float  delta_x, delta_y, delta_z;
     private boolean rightfix, leftfix;
@@ -28,7 +29,7 @@ public class Paddle {
     private int sideX, sideY;
 
     private Paint paint;
-    private Path path;
+
 
 //    private final Rect r;
 
@@ -36,11 +37,11 @@ public class Paddle {
         screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
         screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
 
-        xl = screenWidth / 3 ;
-        xr = screenWidth * 2 / 3;
+        x1 = screenWidth / 3f ;
+        x2 = screenWidth * 2 / 3f;
 
-        yu = 13 * screenHeight / 16;
-        yb = 13 * screenHeight / 16 +20;
+        y1 = 13 * screenHeight / 16f;
+        y2 = 13 * screenHeight / 16f;
 
         sideX = screenWidth / 3;
         sideY = 20;
@@ -49,7 +50,6 @@ public class Paddle {
         paint.setColor(Color.rgb(255, 255, 255));
         paint.setStyle(Paint.Style.FILL);
 
-        path = new Path();
 
         delta_x = 0;
         delta_y = 0;
@@ -59,16 +59,16 @@ public class Paddle {
     }
 
     public float getLeft() {
-        return xl;
+        return x1;
     }
     public float getTop() {
-        return yu;
+        return y1;
     }
     public float getRight() {
-        return xr;
+        return x2;
     }
     public float getBottom() {
-        return yb;
+        return y2;
     }
 
     private int calDist(float transport, float coefficient){
@@ -78,20 +78,61 @@ public class Paddle {
         return pixel_move;
     }
 
-    public void update(float ax, float rx, float ry, float rz, float deltax, float deltay, double delta_t, int dir) {
+    private boolean checkSize(){
+        return Math.abs(x2-x1)* Math.abs(x2-x1) + Math.abs(y2-y1)* Math.abs(y2-y1) > sideX*sideX;
+    }
+
+    public void update(float rx, float ry, float deltax, float deltay) {
         delta_x = sideX - deltax*sideX;
         delta_y = deltay * sideX;
 
+        if(checkSize())
+            return;
+
         if (rx > 0) {
-            rightfix = true;//fix
-            leftfix = false;
-        }else {
-            rightfix = false;
-            leftfix = true;//fix
+            x1 = ry>0 ? -delta_x/2 : delta_x/2;
+            y1 = ry>0 ? -delta_y/2 : delta_y/2;
+            x2 = ry>0 ? delta_x/2 : -delta_x/2;
+            y2 = ry>0 ? delta_y/2 : -delta_y/2;
+        } else if (rx == 0) {
+            x1 = sideX;
+            x2 = 2*sideX;
+            y1 = y2 = 13 * screenHeight / 16f;
+        } else {
+
         }
+
+//        float yladded = leftfix ? 0 : delta_y;
+//        float yradded = rightfix? 0 : delta_y;
+//        float xladded = leftfix ? 0 : delta_x;
+//        float xradded = rightfix? 0 : delta_x;
+//        Log.d(TAG, "rx: " + rx);
+//        if(rightfix) {
+//            x1 = x1 + xladded;
+//            y1 = y1 + yladded;
+//        }
+//        else{
+//            x1 = sideX;
+//            y1 = 13 * screenHeight / 16f;
+//        }
+//
+//        if(leftfix) {
+//            x2 = x2 + xradded;
+//            y2 = y2 + yradded;
+//        }
+//        else{
+//            x2 = 2*sideX;
+//            y2 = 13 * screenHeight / 16f;
+//        }
+//
+//        Log.d(TAG, "hi hi 1: " + yladded);
+//        Log.d(TAG, "hi hi 2: " + yradded);
+//        Log.d(TAG, "hi hi 3: " + xladded);
+//        Log.d(TAG, "hi hi 4: " + xradded);
 
 //        xl += rx;
 //        xr += rx;
+
 
 //        if (xl<0) {
 //            int dist = calDist(rx, screenWidth);
@@ -114,69 +155,18 @@ public class Paddle {
 ////            yb -= ry;
 //        }
 
-
+//        float pixel_move = ax;
+//
+//        if((xl >= screenWidth && pixel_move > 0) || (xr <= 0 && pixel_move < 0))
+//            return;
+//
+//        xl += pixel_move;
+//        xr += pixel_move;
     }
 
     public void draw(Canvas canvas) {
-
-        // Clear the path
-        path.reset();
-
-        // Define the coordinates of the rectangle
-
-        // Define the skew factor
-        float skewFactor = 0.1f;
-
-        // true means add whit 0 // true means fix
-        float yladded = leftfix ? 0 : delta_y;
-        float yradded = rightfix? 0 : delta_y;
-        float xladded = leftfix ? 0 : delta_x;
-        float xradded = rightfix? 0 : delta_x;
-
-        // Move to the top left corner of the rectangle
-        path.moveTo(xl+xladded, yu+yladded);//+ -> min, - -> add, if xl fix -> 0
-
-        // Draw the top line of the rectangle
-        path.lineTo(xr+xradded, yu+yradded);//+ -> min, - -> add, if xr fix -> 0
-
-        // Skew the canvas
-        canvas.skew(skewFactor, 0);
-
-        // Draw the right line of the rectangle
-        path.lineTo(xr+xradded, yb+yradded);
-
-        // Restore the canvas skew
-        canvas.skew(-skewFactor, 0);
-
-        // Draw the bottom line of the rectangle
-        path.lineTo(xl+xladded,  yb+yladded);
-
-        // Skew the canvas again
-        canvas.skew(skewFactor, 0);
-
-        // Draw the left line of the rectangle
-        path.lineTo(xl+xladded, yu+yladded);
-
-        // Restore the canvas skew
-        canvas.skew(-skewFactor, 0);
-
-        // Close the path
-        path.close();
-
-        // Create a matrix and set it to rotate
-//        Matrix matrix = new Matrix();
-//        matrix.postRotate(45, xl, yu);
-//        matrix.postRotate(degrees);
-//
-//// Get the pivot point
-//        float pivotX = path.getBounds().exactCenterX();
-//        float pivotY = path.getBounds().exactCenterY();
-// Apply the rotation to your path
-//        path.transform(matrix);
-        
-        // Draw the path on the canvas
-        canvas.drawPath(path, paint);
-
+        paint.setStrokeWidth(15f);
+        canvas.drawLine(x1, y1, x2, y2, paint);
     }
 
     public void setSpeed(float v) {
