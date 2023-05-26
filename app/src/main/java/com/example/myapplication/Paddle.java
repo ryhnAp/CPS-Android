@@ -89,18 +89,23 @@ public class Paddle {
         if(checkSize())
             return;
 
-        if (rx > 0) {
-            x1 = ry>0 ? -delta_x/2 : delta_x/2;
-            y1 = ry>0 ? -delta_y/2 : delta_y/2;
-            x2 = ry>0 ? delta_x/2 : -delta_x/2;
-            y2 = ry>0 ? delta_y/2 : -delta_y/2;
+        if (rx != 0) {
+            x1 += delta_x/2;
+            y1 += ry>0 ? -delta_y/2 : delta_y/2;
+            x2 -= delta_x/2;
+            y2 += ry>0 ? delta_y/2 : -delta_y/2;
         } else if (rx == 0) {
             x1 = sideX;
             x2 = 2*sideX;
             y1 = y2 = 13 * screenHeight / 16f;
-        } else {
-
         }
+
+        Log.d(TAG, "delta x : " + delta_x);
+        Log.d(TAG, "delta y : " + delta_y);
+        Log.d(TAG, "x 1: " + x1);
+        Log.d(TAG, "x 2: " + x2);
+        Log.d(TAG, "y 1: " + y1);
+        Log.d(TAG, "y 2: " + y2);
 
 //        float yladded = leftfix ? 0 : delta_y;
 //        float yradded = rightfix? 0 : delta_y;
