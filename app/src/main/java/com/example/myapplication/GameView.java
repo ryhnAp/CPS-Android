@@ -19,7 +19,7 @@ import android.view.View;
 import android.widget.TextView;
 
 public class GameView extends View implements SensorEventListener {
-    Velocity velocity = new Velocity(25, 32);
+    Velocity velocity = new Velocity(0, 25);
     float accelerationVelocity;
     int dWidth, dHeight;
     Ball ball;
@@ -41,7 +41,7 @@ public class GameView extends View implements SensorEventListener {
     //Paddle Part:
     float rx, ry, rz, cos = 0, sin = 0;
     private static final float NS2S = 1.0f / 1000000000.0f;
-    private long timestamp = 0;
+    private long timestamp = 0, acceleratorSpan = 0;
     private static final double EPSILON = 0.005f;
     private double gyroscopeRotationVelocity = 0;
 
@@ -88,13 +88,14 @@ public class GameView extends View implements SensorEventListener {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         canvas.drawColor(Color.BLACK);
-        ball.update(velocity, dWidth, dHeight, gyroZ, accelerationVelocity);
+        ball.update(velocity, dWidth, dHeight);
         paddle.update(gyroZ, cos, sin);
 
         if((ball.getCenterX() - ball.getRadius() >= paddle.getLeft()-50 && ball.getCenterX() + ball.getRadius() <= paddle.getRight()+50)
                 && (Math.abs(ball.getCenterY() - paddle.getTop()) <= ball.getRadius() ||
                 Math.abs(ball.getCenterY() - paddle.getBottom()) <= ball.getRadius()) && !lastRebound) {
-            velocity.setY(velocity.getY()*-1);
+//            velocity.setY(velocity.getY()*-1);
+            ball.percussion(velocity, gyroZ, accelerationVelocity);
             lastRebound = true;
         }
         else {
@@ -143,8 +144,9 @@ public class GameView extends View implements SensorEventListener {
 
             ax *= 6f;
 
+            float deltaT = (event.timestamp - acceleratorSpan) * NS2S;
             float acceleration = (float) Math.sqrt(rx*rx + ry*ry + rz*rz);
-            accelerationVelocity = acceleration * event.timestamp;
+            accelerationVelocity = acceleration * deltaT * 10;
 
             if((event.values[0] < low_pass && event.values[0] > 0)
                     || (event.values[0] < 0 && event.values[0] > -low_pass)
@@ -156,6 +158,7 @@ public class GameView extends View implements SensorEventListener {
             last_x = dist;
             velox = ax*delta_t;
             lastax = ax;
+            acceleratorSpan = event.timestamp;
         }
 
         if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {

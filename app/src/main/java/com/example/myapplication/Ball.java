@@ -1,28 +1,33 @@
 package com.example.myapplication;
 
-import android.content.res.Resources;
+import static android.content.ContentValues.TAG;
+
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.Log;
 
 public class Ball {
-    private int centerX;
-    private int centerY;
+    private float centerX;
+    private float centerY;
 
-    private int vxNew, vyNew;
+    private float ground = (float) 9.81;
+
+    private float vxNew, vyNew;
+
+    private boolean firstFallen = false;
 
     private final int radius = 30;
     public Ball() {
-        centerX = 800;
-        centerY = 1400;
+        centerX = 540;
+        centerY = 5;
     }
 
-    int getCenterX() {
+    float getCenterX() {
         return centerX;
     }
 
-    int getCenterY() {
+    float getCenterY() {
         return centerY;
     }
 
@@ -30,25 +35,47 @@ public class Ball {
         return radius;
     }
 
-    public void percussion(float angle, float xx, float yy){
+    public void percussion(Velocity velocity, float angle, float v){
+        float yy = (float) Math.sin(v);
+        float xx = (float) Math.cos(v);
+//
+//        if (!firstFallen) {
+//            firstFallen = true;
+//            velocity.setY(velocity.getY()*-1*ground);
+//        }
         double sinThetaOverTwo = Math.sin(2*angle);
         double cosThetaOverTwo = Math.cos(2*angle);
+        Log.d(TAG, "#1 sinThetaOverTwo : " + sinThetaOverTwo);
+        Log.d(TAG, "#1 cosThetaOverTwo : " + cosThetaOverTwo);
         double x_ = sinThetaOverTwo * yy;
         x_ += cosThetaOverTwo * xx;
         double y_ = -1*sinThetaOverTwo * xx;
         y_ -= cosThetaOverTwo * yy;
-        vxNew = (int) x_;
-        vyNew = (int) y_;
-    }
+        Log.d(TAG, "#1 x_ : " + x_);
+        Log.d(TAG, "#1 y_ : " + y_);
+        vxNew = -1*(float) x_*10;
+        vyNew = -1*(float) y_*10;
 
-    public void update(Velocity velocity, int w, int h, float angle, float v) {
-        float yy = (float) Math.sin(v);
-        float xx = (float) Math.cos(v);
+        velocity.setX(vxNew);
+        velocity.setY(vyNew);
         centerX += velocity.getX();
         centerY += velocity.getY();
-        percussion(angle, xx, yy);
-            velocity.setX(vxNew);
-            velocity.setY(vyNew);
+        Log.d(TAG, "#1 yy : " + yy);
+        Log.d(TAG, "#1 xx : " + xx);
+        Log.d(TAG, "#1 vxnew : " + vxNew);
+        Log.d(TAG, "#1 vynew : " + vyNew);
+
+    }
+
+    public void update(Velocity velocity, int w, int h) {
+        centerX += velocity.getX();
+        centerY += velocity.getY();
+//
+//        if (!firstFallen){
+//            centerX += velocity.getX();
+//            centerY += velocity.getY()*ground;
+//            velocity.setY(centerY);
+//        }
 
         if ((centerX + radius > w) || (centerX - radius < 0)) {
             velocity.setX(velocity.getX()*-1);
