@@ -78,62 +78,33 @@ public class Paddle {
         return pixel_move;
     }
 
-    private boolean checkSize(){
-        return Math.abs(x2-x1)* Math.abs(x2-x1) + Math.abs(y2-y1)* Math.abs(y2-y1) > sideX*sideX;
-    }
+    public void update(float  gyroZ, float deltax, float deltay) {
+        delta_x = deltax*sideX/2;
+        delta_y = deltay*sideX/2;
 
-    public void update(float rx, float ry, float deltax, float deltay) {
-        delta_x = sideX - deltax*sideX;
-        delta_y = deltay * sideX;
+        float centerX, centerY;
+        centerX = (x1+x2)/2;
+        centerY = (y1+y2)/2;
 
-        if(checkSize())
-            return;
+//        if(checkSize())
+//            return;
 
-        if (rx != 0) {
-            x1 += delta_x/2;
-            y1 += ry>0 ? -delta_y/2 : delta_y/2;
-            x2 -= delta_x/2;
-            y2 += ry>0 ? delta_y/2 : -delta_y/2;
-        } else if (rx == 0) {
-            x1 = sideX;
-            x2 = 2*sideX;
-            y1 = y2 = 13 * screenHeight / 16f;
+        if (gyroZ != 0) {
+            int c = gyroZ<0 ? -1 : 1;
+            x1 = centerX - delta_x;
+            y1 = centerY - delta_y;
+            x2 = centerX + delta_x;
+            y2 = centerY + delta_y;
         }
+
+
 
         Log.d(TAG, "delta x : " + delta_x);
         Log.d(TAG, "delta y : " + delta_y);
-        Log.d(TAG, "x 1: " + x1);
-        Log.d(TAG, "x 2: " + x2);
-        Log.d(TAG, "y 1: " + y1);
-        Log.d(TAG, "y 2: " + y2);
-
-//        float yladded = leftfix ? 0 : delta_y;
-//        float yradded = rightfix? 0 : delta_y;
-//        float xladded = leftfix ? 0 : delta_x;
-//        float xradded = rightfix? 0 : delta_x;
-//        Log.d(TAG, "rx: " + rx);
-//        if(rightfix) {
-//            x1 = x1 + xladded;
-//            y1 = y1 + yladded;
-//        }
-//        else{
-//            x1 = sideX;
-//            y1 = 13 * screenHeight / 16f;
-//        }
-//
-//        if(leftfix) {
-//            x2 = x2 + xradded;
-//            y2 = y2 + yradded;
-//        }
-//        else{
-//            x2 = 2*sideX;
-//            y2 = 13 * screenHeight / 16f;
-//        }
-//
-//        Log.d(TAG, "hi hi 1: " + yladded);
-//        Log.d(TAG, "hi hi 2: " + yradded);
-//        Log.d(TAG, "hi hi 3: " + xladded);
-//        Log.d(TAG, "hi hi 4: " + xradded);
+        Log.d(TAG, "x1: " + x1);
+        Log.d(TAG, "x2: " + x2);
+        Log.d(TAG, "y1: " + y1);
+        Log.d(TAG, "y2: " + y2);
 
 //        xl += rx;
 //        xr += rx;
@@ -171,6 +142,7 @@ public class Paddle {
 
     public void draw(Canvas canvas) {
         paint.setStrokeWidth(15f);
+        paint.setColor(Color.rgb(255, 255, 255));
         canvas.drawLine(x1, y1, x2, y2, paint);
     }
 

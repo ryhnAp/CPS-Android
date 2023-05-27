@@ -20,6 +20,7 @@ import android.widget.TextView;
 
 public class GameView extends View implements SensorEventListener {
     Velocity velocity = new Velocity(25, 32);
+    float accelerationVelocity;
     int dWidth, dHeight;
     Ball ball;
     Paddle paddle;
@@ -38,10 +39,10 @@ public class GameView extends View implements SensorEventListener {
     float gyroZ;
 
     //Paddle Part:
-    float rx, ry, rz, cos = 1, sin = 0;
+    float rx, ry, rz, cos = 0, sin = 0;
     private static final float NS2S = 1.0f / 1000000000.0f;
     private long timestamp = 0;
-    private static final double EPSILON = 1.0f;
+    private static final double EPSILON = 0.005f;
     private double gyroscopeRotationVelocity = 0;
 
     private Sensor gyroscopeSensor;
@@ -54,6 +55,8 @@ public class GameView extends View implements SensorEventListener {
     int dir;
 
     private SensorManager sensorManager;
+    private SensorManager sensorManager2;
+
     private Sensor accelerometerSensor;
 
     TextView textView;
@@ -70,8 +73,9 @@ public class GameView extends View implements SensorEventListener {
         dWidth = size.x;
         dHeight = size.y;
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        sensorManager2 = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
         accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        gyroscopeSensor = sensorManager2.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
         paint = new Paint();
         paint.setColor(Color.WHITE); // Set color to black
@@ -84,8 +88,8 @@ public class GameView extends View implements SensorEventListener {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         canvas.drawColor(Color.BLACK);
-        ball.update(velocity, dWidth, dHeight);
-        paddle.update(rx, ry, cos, sin);
+        ball.update(velocity, dWidth, dHeight, gyroZ, accelerationVelocity);
+        paddle.update(gyroZ, cos, sin);
 
         if((ball.getCenterX() - ball.getRadius() >= paddle.getLeft()-50 && ball.getCenterX() + ball.getRadius() <= paddle.getRight()+50)
                 && (Math.abs(ball.getCenterY() - paddle.getTop()) <= ball.getRadius() ||
@@ -139,6 +143,9 @@ public class GameView extends View implements SensorEventListener {
 
             ax *= 6f;
 
+            float acceleration = (float) Math.sqrt(rx*rx + ry*ry + rz*rz);
+            accelerationVelocity = acceleration * event.timestamp;
+
             if((event.values[0] < low_pass && event.values[0] > 0)
                     || (event.values[0] < 0 && event.values[0] > -low_pass)
                     || event.values[0] > high_pass
@@ -158,57 +165,30 @@ public class GameView extends View implements SensorEventListener {
                 ry = event.values[1];
                 rz = event.values[2];
 
-                gyroX = (float) (rx*dT * (180 / Math.PI));
-                gyroY = (float) (ry*dT * (180 / Math.PI));
-                gyroZ = (float) (rz*dT * (180 / Math.PI));
-                Log.d(TAG, "Gyroscope X: " + gyroX + " degrees/s");
-                Log.d(TAG, "Gyroscope Y: " + gyroY + " degrees/s");
-                Log.d(TAG, "Gyroscope Z: " + gyroZ + " degrees/s");
-                if (gyroZ > EPSILON) {
+                gyroX = (float) (rx*dT);
+                gyroY = (float) (ry*dT);
+                gyroZ = (float) (rz*dT);
+                if(gyroZ > 0)
+                    Log.d(TAG, "positive : " + gyroZ);
+                if(gyroZ < 0)
+                    Log.d(TAG, "negative : " + gyroZ);
+                if (Math.abs(gyroZ) > EPSILON) {
                     double sinThetaOverTwo = Math.sin(gyroZ);
                     sin = (float) sinThetaOverTwo;
                     double cosThetaOverTwo = Math.cos(gyroZ);
+                    Log.d(TAG, "hi cos sin ");
                     Log.d(TAG, "cosThetaOverTwo " + cosThetaOverTwo);
+                    Log.d(TAG, "sinThetaOverTwo " + sinThetaOverTwo);
                     cos = (float) cosThetaOverTwo;
+                }
+                else {
+                    gyroZ = 0;
+                    sin = 0;
+                    cos = 0;
                 }
             }
             timestamp = event.timestamp;
-//            if (timestamp != 0) {
-//                final float dT = (event.timestamp - timestamp) * NS2S;
-//                // Axis of the rotation sample, not normalized yet.
-//                float axisX = event.values[0];
-//                float axisY = event.values[1];
-//                float axisZ = event.values[2];
-//
-//                // Calculate the angular speed of the sample
-//                gyroscopeRotationVelocity = Math.sqrt(axisX * axisX + axisY * axisY + axisZ * axisZ);
-//
-//                // Normalize the rotation vector if it's big enough to get the axis
-//                if (gyroscopeRotationVelocity > EPSILON) {
-//                    axisX /= gyroscopeRotationVelocity;
-//                    axisY /= gyroscopeRotationVelocity;
-//                    axisZ /= gyroscopeRotationVelocity;
-//                }
-//
-//                // Integrate around this axis with the angular speed by the timestep
-//                // in order to get a delta rotation from this sample over the timestep
-//                // We will convert this axis-angle representation of the delta rotation
-//                // into a quaternion before turning it into the rotation matrix.
-//                double thetaOverTwo = gyroscopeRotationVelocity * dT / 2.0f;
-//                double sinThetaOverTwo = Math.sin(thetaOverTwo);
-//                double cosThetaOverTwo = Math.cos(thetaOverTwo);
-//                rx = ((float) (sinThetaOverTwo * axisX));
-//                ry = ((float) (sinThetaOverTwo * axisY));
-//                rz = ((float) (sinThetaOverTwo * axisZ));
-//                cos = ((float) (cosThetaOverTwo * axisZ));
-//                sin = ((float) (sinThetaOverTwo * axisZ));
-////                deltaQuaternion.setW(-(float) cosThetaOverTwo);
-//            }
-//            timestamp = event.timestamp;
-//
         }
-
-
     }
 
     @Override
